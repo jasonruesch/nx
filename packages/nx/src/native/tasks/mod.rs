@@ -3,5 +3,6 @@ mod hash_planner;
 mod hashers;
 mod inputs;
 pub mod task_hasher;
-mod types;
+pub mod task_history;
+pub mod types;
 mod utils;
