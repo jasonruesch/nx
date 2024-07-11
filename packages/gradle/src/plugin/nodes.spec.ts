@@ -182,152 +182,259 @@ describe('@nx/gradle/plugin', () => {
     `);
   });
 
-  it('should create nodes with atomized tests targets based on gradle for nested project root', async () => {
-    gradleReport = {
-      gradleFileToGradleProjectMap: new Map<string, string>([
-        ['nested/nested/proj/build.gradle', 'proj'],
-      ]),
-      buildFileToDepsMap: new Map<string, string>(),
-      gradleFileToOutputDirsMap: new Map<string, Map<string, string>>([
-        ['nested/nested/proj/build.gradle', new Map([['build', 'build']])],
-      ]),
-      gradleProjectToTasksTypeMap: new Map<string, Map<string, string>>([
-        ['proj', new Map([['test', 'Test']])],
-      ]),
-      gradleProjectToProjectName: new Map<string, string>([['proj', 'proj']]),
-    };
-    await tempFs.createFiles({
-      'nested/nested/proj/build.gradle': ``,
-    });
-    await tempFs.createFiles({
-      'proj/src/test/java/test/rootTest.java': ``,
-    });
-    await tempFs.createFiles({
-      'nested/nested/proj/src/test/java/test/test.java': ``,
-    });
-    await tempFs.createFiles({
-      'nested/nested/proj/src/test/java/test/test1.java': ``,
+  describe('with atomized tests targets', () => {
+    beforeEach(async () => {
+      gradleReport = {
+        gradleFileToGradleProjectMap: new Map<string, string>([
+          ['nested/nested/proj/build.gradle', 'proj'],
+        ]),
+        buildFileToDepsMap: new Map<string, string>(),
+        gradleFileToOutputDirsMap: new Map<string, Map<string, string>>([
+          ['nested/nested/proj/build.gradle', new Map([['build', 'build']])],
+        ]),
+        gradleProjectToTasksTypeMap: new Map<string, Map<string, string>>([
+          ['proj', new Map([['test', 'Test']])],
+        ]),
+        gradleProjectToProjectName: new Map<string, string>([['proj', 'proj']]),
+      };
+      await tempFs.createFiles({
+        'nested/nested/proj/build.gradle': ``,
+      });
+      await tempFs.createFiles({
+        'proj/src/test/java/test/rootTest.java': ``,
+      });
+      await tempFs.createFiles({
+        'nested/nested/proj/src/test/java/test/test.java': ``,
+      });
+      await tempFs.createFiles({
+        'nested/nested/proj/src/test/java/test/test1.java': ``,
+      });
     });
 
-    const results = await createNodesFunction(
-      [
-        'nested/nested/proj/build.gradle',
-        'proj/src/test/java/test/rootTest.java',
-        'nested/nested/proj/src/test/java/test/test.java',
-        'nested/nested/proj/src/test/java/test/test1.java',
-      ],
-      {
-        buildTargetName: 'build',
-        ciTargetName: 'test-ci',
-      },
-      context
-    );
-
-    expect(results).toMatchInlineSnapshot(`
-      [
+    it('should create nodes with atomized tests targets based on gradle for nested project root', async () => {
+      const results = await createNodesFunction(
         [
-          "nested/nested/proj/build.gradle",
-          {
-            "projects": {
-              "nested/nested/proj": {
-                "metadata": {
-                  "targetGroups": {
-                    "Test": [
-                      "test-ci--test",
-                      "test-ci--test1",
-                      "test-ci",
-                      "test",
-                    ],
-                  },
-                  "technologies": [
-                    "gradle",
-                  ],
-                },
-                "name": "proj",
-                "targets": {
-                  "test": {
-                    "cache": false,
-                    "command": "./gradlew proj:test",
-                    "dependsOn": [
-                      "classes",
-                    ],
-                    "inputs": [
-                      "default",
-                      "^production",
-                    ],
-                    "metadata": {
-                      "technologies": [
-                        "gradle",
+          'nested/nested/proj/build.gradle',
+          'proj/src/test/java/test/rootTest.java',
+          'nested/nested/proj/src/test/java/test/test.java',
+          'nested/nested/proj/src/test/java/test/test1.java',
+        ],
+        {
+          buildTargetName: 'build',
+          ciTargetName: 'test-ci',
+        },
+        context
+      );
+
+      expect(results).toMatchInlineSnapshot(`
+        [
+          [
+            "nested/nested/proj/build.gradle",
+            {
+              "projects": {
+                "nested/nested/proj": {
+                  "metadata": {
+                    "targetGroups": {
+                      "Test": [
+                        "test-ci--test",
+                        "test-ci--test1",
+                        "test-ci",
+                        "test",
                       ],
                     },
+                    "technologies": [
+                      "gradle",
+                    ],
                   },
-                  "test-ci": {
-                    "cache": true,
-                    "dependsOn": [
-                      {
-                        "params": "forward",
-                        "projects": "self",
-                        "target": "test-ci--test",
+                  "name": "proj",
+                  "targets": {
+                    "test": {
+                      "cache": false,
+                      "command": "./gradlew proj:test",
+                      "dependsOn": [
+                        "classes",
+                      ],
+                      "inputs": [
+                        "default",
+                        "^production",
+                      ],
+                      "metadata": {
+                        "technologies": [
+                          "gradle",
+                        ],
                       },
-                      {
-                        "params": "forward",
-                        "projects": "self",
-                        "target": "test-ci--test1",
+                    },
+                    "test-ci": {
+                      "cache": true,
+                      "dependsOn": [
+                        {
+                          "params": "forward",
+                          "projects": "self",
+                          "target": "test-ci--test",
+                        },
+                        {
+                          "params": "forward",
+                          "projects": "self",
+                          "target": "test-ci--test1",
+                        },
+                      ],
+                      "executor": "nx:noop",
+                      "inputs": [
+                        "default",
+                        "^production",
+                      ],
+                      "metadata": {
+                        "description": "Runs Gradle Tests in CI",
+                        "nonAtomizedTarget": "test",
+                        "technologies": [
+                          "gradle",
+                        ],
                       },
-                    ],
-                    "executor": "nx:noop",
-                    "inputs": [
-                      "default",
-                      "^production",
-                    ],
-                    "metadata": {
-                      "description": "Runs Gradle Tests in CI",
-                      "nonAtomizedTarget": "test",
-                      "technologies": [
-                        "gradle",
-                      ],
                     },
-                  },
-                  "test-ci--test": {
-                    "cache": true,
-                    "command": "./gradlew proj:test --tests test",
-                    "dependsOn": [
-                      "classes",
-                    ],
-                    "inputs": [
-                      "default",
-                      "^production",
-                    ],
-                    "metadata": {
-                      "description": "Runs Gradle test nested/nested/proj/src/test/java/test/test.java in CI",
-                      "technologies": [
-                        "gradle",
+                    "test-ci--test": {
+                      "cache": true,
+                      "command": "./gradlew proj:test --tests test",
+                      "dependsOn": [
+                        "classes",
                       ],
+                      "inputs": [
+                        "default",
+                        "^production",
+                      ],
+                      "metadata": {
+                        "description": "Runs Gradle test nested/nested/proj/src/test/java/test/test.java in CI",
+                        "technologies": [
+                          "gradle",
+                        ],
+                      },
                     },
-                  },
-                  "test-ci--test1": {
-                    "cache": true,
-                    "command": "./gradlew proj:test --tests test1",
-                    "dependsOn": [
-                      "classes",
-                    ],
-                    "inputs": [
-                      "default",
-                      "^production",
-                    ],
-                    "metadata": {
-                      "description": "Runs Gradle test nested/nested/proj/src/test/java/test/test1.java in CI",
-                      "technologies": [
-                        "gradle",
+                    "test-ci--test1": {
+                      "cache": true,
+                      "command": "./gradlew proj:test --tests test1",
+                      "dependsOn": [
+                        "classes",
                       ],
+                      "inputs": [
+                        "default",
+                        "^production",
+                      ],
+                      "metadata": {
+                        "description": "Runs Gradle test nested/nested/proj/src/test/java/test/test1.java in CI",
+                        "technologies": [
+                          "gradle",
+                        ],
+                      },
                     },
                   },
                 },
               },
             },
-          },
+          ],
+        ]
+      `);
+    });
+
+    it('should not create nodes if the test file is in excludeTestFiles', async () => {
+      const results = await createNodesFunction(
+        [
+          'nested/nested/proj/build.gradle',
+          'proj/src/test/java/test/rootTest.java',
+          'nested/nested/proj/src/test/java/test/test.java',
+          'nested/nested/proj/src/test/java/test/test1.java',
         ],
-      ]
-    `);
+        {
+          buildTargetName: 'build',
+          ciTargetName: 'test-ci',
+          excludeTestFiles: [
+            'nested/nested/proj/src/test/java/test/test1.java',
+          ],
+        },
+        context
+      );
+
+      expect(results).toMatchInlineSnapshot(`
+        [
+          [
+            "nested/nested/proj/build.gradle",
+            {
+              "projects": {
+                "nested/nested/proj": {
+                  "metadata": {
+                    "targetGroups": {
+                      "Test": [
+                        "test-ci--test",
+                        "test-ci",
+                        "test",
+                      ],
+                    },
+                    "technologies": [
+                      "gradle",
+                    ],
+                  },
+                  "name": "proj",
+                  "targets": {
+                    "test": {
+                      "cache": false,
+                      "command": "./gradlew proj:test",
+                      "dependsOn": [
+                        "classes",
+                      ],
+                      "inputs": [
+                        "default",
+                        "^production",
+                      ],
+                      "metadata": {
+                        "technologies": [
+                          "gradle",
+                        ],
+                      },
+                    },
+                    "test-ci": {
+                      "cache": true,
+                      "dependsOn": [
+                        {
+                          "params": "forward",
+                          "projects": "self",
+                          "target": "test-ci--test",
+                        },
+                      ],
+                      "executor": "nx:noop",
+                      "inputs": [
+                        "default",
+                        "^production",
+                      ],
+                      "metadata": {
+                        "description": "Runs Gradle Tests in CI",
+                        "nonAtomizedTarget": "test",
+                        "technologies": [
+                          "gradle",
+                        ],
+                      },
+                    },
+                    "test-ci--test": {
+                      "cache": true,
+                      "command": "./gradlew proj:test --tests test",
+                      "dependsOn": [
+                        "classes",
+                      ],
+                      "inputs": [
+                        "default",
+                        "^production",
+                      ],
+                      "metadata": {
+                        "description": "Runs Gradle test nested/nested/proj/src/test/java/test/test.java in CI",
+                        "technologies": [
+                          "gradle",
+                        ],
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          ],
+        ]
+      `);
+    });
   });
 });

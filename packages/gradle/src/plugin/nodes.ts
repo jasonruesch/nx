@@ -44,7 +44,8 @@ export interface GradlePluginOptions {
   testTargetName?: string;
   classesTargetName?: string;
   buildTargetName?: string;
-  [taskTargetName: string]: string | undefined;
+  excludeTestFiles?: string[];
+  [taskTargetName: string]: any;
 }
 
 function normalizeOptions(options: GradlePluginOptions): GradlePluginOptions {
@@ -75,7 +76,10 @@ export function writeTargetsToCache(cachePath: string, results: GradleTargets) {
 export const createNodesV2: CreateNodesV2<GradlePluginOptions> = [
   gradleConfigAndTestGlob,
   async (files, options, context) => {
-    const { configFiles, projectRoots, testFiles } = splitConfigFiles(files);
+    const { configFiles, projectRoots, testFiles } = splitConfigFiles(
+      files,
+      options.excludeTestFiles
+    );
     const optionsHash = hashObject(options);
     const cachePath = join(
       workspaceDataDirectory,
@@ -361,7 +365,10 @@ function getTestCiTargets(
   targetGroups[targetGroupName].push(ciTargetName);
 }
 
-function splitConfigFiles(files: readonly string[]): {
+function splitConfigFiles(
+  files: readonly string[],
+  excludeTestFiles?: string[]
+): {
   configFiles: string[];
   testFiles: string[];
   projectRoots: string[];
@@ -374,7 +381,9 @@ function splitConfigFiles(files: readonly string[]): {
       configFiles.push(file);
       projectRoots.add(dirname(file));
     } else {
-      testFiles.push(file);
+      if (!excludeTestFiles || !excludeTestFiles?.includes(file)) {
+        testFiles.push(file);
+      }
     }
   });
 
