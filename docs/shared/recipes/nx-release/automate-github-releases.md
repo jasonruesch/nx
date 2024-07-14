@@ -28,7 +28,7 @@ Use `nx release --dry-run` to preview the GitHub release instead of creating it.
 
 ## Disable File Creation
 
-Since GitHub releases contain the changelog, you may wish to disable the generation and management of local the `CHANGELOG.md` file. To do this, set `release.changelog.workspaceChangelog.file` to `false` in `nx.json`:
+Since GitHub releases contain the changelog, you may wish to disable the generation and management of the local `CHANGELOG.md` file. To do this, set `release.changelog.workspaceChangelog.file` to `false` in `nx.json`:
 
 ```json
 {
